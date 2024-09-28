@@ -1,15 +1,16 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, signOutAccount } from "@/lib/appwrite/api"; // Adjust import as necessary
-import { IContextType, IUser } from '@/types';
+import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useEffect, useState } from "react";
+
+import { IUser } from "@/types";
+import { getCurrentUser } from "@/lib/appwrite/api";
 
 export const INITIAL_USER = {
-  id: '',
-  name: '',
-  username: '',
-  email: '',
-  imageUrl: '',
-  bio: ''
+  id: "",
+  name: "",
+  username: "",
+  email: "",
+  imageUrl: "",
+  bio: "",
 };
 
 const INITIAL_STATE = {
@@ -18,19 +19,28 @@ const INITIAL_STATE = {
   isAuthenticated: false,
   setUser: () => {},
   setIsAuthenticated: () => {},
-  checkAuthUser: async () => false,
-  logout: async () => {} // Add logout function here
+  checkAuthUser: async () => false as boolean,
+};
+
+type IContextType = {
+  user: IUser;
+  isLoading: boolean;
+  setUser: React.Dispatch<React.SetStateAction<IUser>>;
+  isAuthenticated: boolean;
+  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+  checkAuthUser: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<IContextType>(INITIAL_STATE);
 
-const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState<IUser>(INITIAL_USER);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
 
   const checkAuthUser = async () => {
+    setIsLoading(true);
     try {
       const currentAccount = await getCurrentUser();
       if (currentAccount) {
@@ -43,45 +53,31 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           bio: currentAccount.bio,
         });
         setIsAuthenticated(true);
+
         return true;
       }
+
       return false;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = async () => {
-    try {
-      await signOutAccount(); // Ensure this function exists and handles sign-out
-      setUser(INITIAL_USER);
-      setIsAuthenticated(false);
-      navigate('/Sign-in'); // Redirect after logout
-    } catch (error) {
-      console.log('Logout error:', error);
-    }
-  };
-
   useEffect(() => {
-    const cookieFallback = localStorage.getItem('cookieFallback');
-    console.log('Current cookieFallback value:', cookieFallback);
-  
-    // Comment out or modify the redirection
-    // if (cookieFallback === '[]') {
-    //   console.log('Redirecting to /sign-in due to empty cookieFallback');
-    //   navigate('/sign-in');
-    // } else {
-    //   checkAuthUser();
-    // }
-    
-    // Always call checkAuthUser for testing purposes
+    const cookieFallback = localStorage.getItem("cookieFallback");
+    if (
+      cookieFallback === "[]" ||
+      cookieFallback === null ||
+      cookieFallback === undefined
+    ) {
+      navigate("/sign-in");
+    }
+
     checkAuthUser();
-  }, [navigate]);
-  
-  
+  }, []);
 
   const value = {
     user,
@@ -90,11 +86,9 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isAuthenticated,
     setIsAuthenticated,
     checkAuthUser,
-    logout // Provide logout method
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}
 
-export default AuthProvider;
 export const useUserContext = () => useContext(AuthContext);
