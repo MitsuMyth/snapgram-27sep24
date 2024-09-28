@@ -7,14 +7,12 @@ import { useSignOutAccount } from "@/lib/react-query/queriesAndMutations";
 
 const Topbar = () => {
   const navigate = useNavigate();
-  const { user, logout } = useUserContext(); // Use logout from context
+  const { user } = useUserContext();
   const { mutate: signOut, isSuccess } = useSignOutAccount();
 
   useEffect(() => {
-    if (isSuccess) {
-      logout(); // Call the logout function from context
-    }
-  }, [isSuccess, logout]);
+    if (isSuccess) navigate(0);
+  }, [isSuccess]);
 
   return (
     <section className="topbar">

@@ -1,8 +1,8 @@
 import { ID, Query } from "appwrite";
-
+import { ImageGravity } from 'appwrite'; // Adjust the import based on your appwrite packag
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
-import { error } from "console";
+
 
 // ============================================================
 // AUTH
@@ -185,7 +185,7 @@ export function getFilePreview(fileId: string) {
       fileId,
       2000,
       2000,
-      "top",
+      ImageGravity.Top,
       100
     );
 
